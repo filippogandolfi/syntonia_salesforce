@@ -32,7 +32,7 @@ def convert_for_salesforce(df_azienda, df_privato):
         "Identificativo": None,
         "Tipo": None,
         "Agente": None,
-        "Stato": None,
+        "Stato": None,  # non so cosa mettere
         "Cliente": "Società",
         "Indirizzo": "Via",
         "Città": "Città",
@@ -52,20 +52,68 @@ def convert_for_salesforce(df_azienda, df_privato):
         "Fatturato": "Reddito annuale",
         "GDPR": "Consenso Privacy",
         "Marketing": "Consenso Promozioni e Newsletter",
-        "Note cliente": "Note cliente",
+        "Note cliente": "Descrizione Richiesta Web",
         "Data creazione": "Data Richiesta"
     }
 
-    # Creating a new dictionary
-    new_dict = {}
+    converter_notecliente = {
+        "Extra Km": "Extra Km",
+        "Extra": "Extra",
+        "Marca": "Marca",
+        "Modello": "Modello",
+        "Chilometri": "Km Offerta Sito",
+        "Durata": "Indicazioni Durata Nolo",
+        "Carburante": "Alimentazione",
+        "Anticipo": "Anticipo Offerta Sito",
+        "Km Offerta Sito": "",
+        "Prezzo": "Prezzo Offerta Sito",
+        "Data Richiesta": "Data Richiesta",
+        "Promo": "Promo",
+        "Consenso Privacy": "Consenso Privacy",
+        "Consenso Promozioni e Newsletter": "Consenso Promozioni e Newsletter"
+    }
+
+    # Take for each row "Note cliente" and split it into multiple rows
+    for index, row in df_azienda.iterrows():
+        if row["Note cliente"]:
+            notes = row["Note cliente"].split("\n")
+            # if notes start with "Extra" or "Marca", continue
+            if notes[0].startswith("Extra") or notes[0].startswith("Marca"):
+                for note in notes:
+                    # Use the start of note until ":" as the new column name
+                    try:
+                        new_column = note[:note.index(":")]
+                    except ValueError:
+                        new_column = None
+                    if new_column in converter_notecliente:
+                        df_azienda.at[index, new_column] = note[note.index(":") + 1:]
+
+    # Take for each row "Note cliente" and split it into multiple rows
+    for index, row in df_privato.iterrows():
+        if row["Note cliente"]:
+            notes = row["Note cliente"].split("\n")
+            # if notes start with "Extra" or "Marca", continue
+            if notes[0].startswith("Extra") or notes[0].startswith("Marca"):
+                for note in notes:
+                    # Use the start of note until ":" as the new column name
+                    try:
+                        new_column = note[:note.index(":")]
+                    except ValueError:
+                        new_column = None
+                    if new_column in converter_notecliente:
+                        df_privato.at[index, new_column] = note[note.index(":") + 1:]
 
     # Iterating over old dataframe and filling new dictionary
     for old_column in old_columns:
         new_column = converter.get(old_column)
-        if new_column:
-            print("new columns")
+        if new_column and new_column != "Note cliente":
+            # change the column name of the dataframe
+            df_azienda.rename(columns={old_column: new_column}, inplace=True)
+            df_privato.rename(columns={old_column: new_column}, inplace=True)
+        else:
+            print(f"Column {old_column} not parsed in the new format")
 
-    print(new_dict)
+    return df_azienda, df_privato
 
 
 def split_xls_files(input_folder, output_folder):
@@ -79,7 +127,7 @@ def split_xls_files(input_folder, output_folder):
     xl = pd.read_excel(path, sheet_name=sheet_name, skiprows=2)
     df_azienda = xl[xl['Forma giuridica'] != 'Privato']
     df_privato = xl[xl['Forma giuridica'] == 'Privato']
-    # df_azienda, df_privato = convert_for_salesforce(df_azienda, df_privato)
+    df_azienda, df_privato = convert_for_salesforce(df_azienda, df_privato)
     df_azienda.to_excel('output/Azienda.xlsx', index=False)
     df_privato.to_excel('output/Privato.xlsx', index=False)
     return 'output/Azienda.xlsx', 'output/Privato.xlsx'
