@@ -10,6 +10,10 @@
 #### Quando NON creiamo un lead? 
 - Quando riceviamo qualsiasi contatto che è già QUALIFICATO, in questo caso creiamo un'Opportunità
 
+#### Come distinguo un PRIVATO da una P.IVA?
+- Il campo "Società", se compilato, porta alla creazione di un account P.IVA che nel CRM viene chiamato ACCOUNT BUSINESS
+- Dove il campo "Società" non è compilato, sarà un PRIVATO, denominato ACCOUNT PERSONALE
+
 
 ## 2. Schermata "Crea Lead"
 - I campi obbligatori sono quelli legati all'inidicizzazione del contatto.
